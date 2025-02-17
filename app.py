@@ -1,23 +1,28 @@
 import requests
 import networkx as nx
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, session
 from flask_cors import CORS
 import sqlite3
+import bcrypt
 
 app = Flask(__name__)
+app.secret_key = "your_secret_key_here"  # Set a secure key for session handling
 CORS(app)
 
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
+    
+    # Create users table with hashed passwords
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
-            username TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL
         )
     ''')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS onboarding (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,6 +32,7 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+
     conn.commit()
     conn.close()
 
@@ -34,57 +40,76 @@ def init_db():
 def index():
     return render_template('index.html')
 
+# User Registration (Signup)
 @app.route('/create_account', methods=['POST'])
 def create_account():
     data = request.json
     email = data['email']
     username = data['username']
-    password = data['password']
+    password = data['password'].encode('utf-8')
+
+    hashed_password = bcrypt.hashpw(password, bcrypt.gensalt())  # Hash password
 
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    c.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-              (email, username, password))
-    conn.commit()
-    user_id = c.lastrowid
+
+    try:
+        c.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                  (email, username, hashed_password))
+        conn.commit()
+        user_id = c.lastrowid
+        conn.close()
+        return jsonify({'message': 'Account created successfully!', 'user_id': user_id})
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({'error': 'Email or username already exists'}), 400
+
+# User Login
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data['username']
+    password = data['password'].encode('utf-8')
+
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT id, password FROM users WHERE username = ?', (username,))
+    user = c.fetchone()
     conn.close()
 
-    return jsonify({'user_id': user_id})
+    if user and bcrypt.checkpw(password, user[1]):
+        session['user_id'] = user[0]  # Store user session
+        return jsonify({'message': 'Login successful', 'user_id': user[0]})
+    else:
+        return jsonify({'error': 'Invalid username or password'}), 401
 
+# Logout Endpoint
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)  # Remove user session
+    return jsonify({'message': 'Logged out successfully'})
+
+# Detect Technologies from GitHub Commits
 def detect_technologies_from_commit(commit_message, file_extensions):
-    """Detects technologies based on commit messages and file extensions."""
     technologies = {
-        "py": "Python",
-        "js": "JavaScript",
-        "jsx": "React",
-        "ts": "TypeScript",
-        "html": "HTML",
-        "css": "CSS",
-        "scss": "SCSS",
-        "less": "LESS",
-        "sh": "Shell Scripting",
-        "yml": "YAML",
-        "json": "JSON",
-        "tf": "Terraform"
+        "py": "Python", "js": "JavaScript", "jsx": "React",
+        "ts": "TypeScript", "html": "HTML", "css": "CSS",
+        "scss": "SCSS", "less": "LESS", "sh": "Shell Scripting",
+        "yml": "YAML", "json": "JSON", "tf": "Terraform"
     }
 
-    # Check technologies from commit messages
     detected_technologies = [
         tech for tech in technologies.values() if tech.lower() in commit_message.lower()
     ]
 
-    # Check technologies from file extensions
     for ext in file_extensions:
         if ext in technologies:
             detected_technologies.append(technologies[ext])
 
-    detected_technologies = list(set(detected_technologies))  # Remove duplicates
-    print(f"Commit message: {commit_message} | Detected technologies: {detected_technologies}")  # Debugging
+    return list(set(detected_technologies))  # Remove duplicates
 
-    return detected_technologies
-
+# Build Skill Graph for Recommendations
 def build_skill_graph():
-    """Creates a directed graph of skill dependencies."""
     G = nx.DiGraph()
     G.add_edge("Python", "Django")
     G.add_edge("Python", "Flask")
@@ -95,7 +120,6 @@ def build_skill_graph():
     return G
 
 def recommend_skills(commits):
-    """Recommends new skills based on detected technologies."""
     G = build_skill_graph()
     detected_skills = set()
 
@@ -105,7 +129,6 @@ def recommend_skills(commits):
         technologies = detect_technologies_from_commit(message, file_extensions)
         detected_skills.update(technologies)
 
-    # Recommend skills based on the graph
     recommendations = set()
     for skill in detected_skills:
         if skill in G:
@@ -113,31 +136,28 @@ def recommend_skills(commits):
 
     return list(recommendations)
 
+# Fetch GitHub Repositories
 def fetch_repos(username, token):
-    """Fetches a list of repositories from GitHub."""
     url = f"https://api.github.com/users/{username}/repos"
     headers = {"Authorization": f"Bearer {token}"}
-
     response = requests.get(url, headers=headers)
+
     if response.status_code == 200:
         return response.json()
     else:
-        print(f"Error fetching repos: {response.status_code}, {response.text}")
         return []
 
+# Fetch Commit History from GitHub
 def fetch_commit_history(username, repo_name, token):
-    """Fetches commit history and associated file changes for a repository."""
     url = f"https://api.github.com/repos/{username}/{repo_name}/commits"
     headers = {"Authorization": f"Bearer {token}"}
-
     response = requests.get(url, headers=headers)
+
     if response.status_code != 200:
-        print(f"Error fetching commits for {repo_name}: {response.status_code}, {response.text}")
         return []
 
     commits = response.json()
 
-    # Enrich commit data with file extensions
     for commit in commits:
         sha = commit["sha"]
         commit_url = f"https://api.github.com/repos/{username}/{repo_name}/commits/{sha}"
@@ -147,22 +167,25 @@ def fetch_commit_history(username, repo_name, token):
             commit_data = commit_response.json()
             files = commit_data.get("files", [])
 
-            # Extract file extensions
             file_extensions = set()
             for file in files:
                 if "filename" in file:
-                    ext = file["filename"].split(".")[-1]  # Get file extension
+                    ext = file["filename"].split(".")[-1]
                     file_extensions.add(ext)
 
             commit["file_extensions"] = list(file_extensions)
 
     return commits
 
+# Analyze GitHub Profile and Recommend Skills
 @app.route('/analyze_github', methods=['POST'])
 def analyze_github():
     data = request.json
     github_username = data['githubUsername']
     github_token = data['githubToken']
+
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 403
 
     repos = fetch_repos(github_username, github_token)
     if not repos:
