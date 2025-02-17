@@ -8,7 +8,7 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #1E1E1E;
+    background-color: #e0ef0d;
     color: #D4D4D4;
     display: flex;
     justify-content: center;
@@ -17,19 +17,33 @@ body {
     flex-direction: column;
     padding: 30px;
     text-align: center;
-    background-image: url('bg.jpg');
+    background-image: url('12.jpg');
     background-size: cover;
     background-position: center center;
+    animation: fadeInPage 1s ease-in-out;
+}
+
+/* Page Fade-in Animation */
+@keyframes fadeInPage {
+    0% { opacity: 0; transform: translateY(-10px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 header {
     width: 100%;
     padding: 25px;
-    background-color: #252526;
+    background-color: rgba(37, 37, 38, 0.8);
     color: #61AFEF;
     box-shadow: 0px 3px 15px rgba(0, 0, 0, 0.4);
     border-radius: 12px;
     margin-bottom: 40px;
+    animation: slideInDown 1s ease-out;
+}
+
+/* Header Slide-in Animation */
+@keyframes slideInDown {
+    0% { transform: translateY(-50px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
 }
 
 h1 {
@@ -38,20 +52,13 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 2px;
     color: #61AFEF;
-    opacity: 0;
-    transform: scale(0.9);
     animation: fadeInScale 1s ease-out forwards;
 }
 
+/* Title Animation */
 @keyframes fadeInScale {
-    0% {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 main {
@@ -64,23 +71,18 @@ main {
 
 section {
     margin-bottom: 40px;
-    background-color: #2D2D30;
+    background-color: rgba(45, 45, 48, 0.8);
     padding: 40px;
     border-radius: 15px;
     box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.4);
-    opacity: 0;
     animation: fadeInSection 1s ease-out forwards;
+    opacity: 0;
 }
 
+/* Section Fade-in Animation */
 @keyframes fadeInSection {
-    0% {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 h2 {
@@ -96,15 +98,16 @@ form {
     display: flex;
     flex-direction: column;
     width: 100%;
+    align-items: flex-start;
 }
 
 .form-group {
     position: relative;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 label {
-    margin-top: 10px;
     font-weight: bold;
     color: #BEBEBE;
     position: absolute;
@@ -120,24 +123,21 @@ input, select {
     font-size: 1.2rem;
     border: 1px solid #444;
     border-radius: 8px;
-    background-color: #252526;
+    background-color: rgba(37, 37, 38, 0.8);
     color: #D4D4D4;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
 }
 
+/* Input Focus Animation */
 input:focus, select:focus {
-    background-color: #333;
+    background-color: rgba(51, 51, 51, 0.8);
     outline: none;
     border-color: #61AFEF;
+    box-shadow: 0px 0px 12px rgba(97, 175, 239, 0.6);
 }
 
-input:focus + label, select:focus + label {
-    font-size: 1.1rem;
-    top: -30px;
-    left: 12px;
-    color: #61AFEF;
-}
-
+/* Button Styles */
 button {
     margin-top: 20px;
     padding: 12px 24px;
@@ -149,19 +149,22 @@ button {
     box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.4);
     cursor: pointer;
     transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
 }
 
+/* Button Hover Effect */
 button:hover {
     background: linear-gradient(135deg, #4E4EFF, #61AFEF);
-    transform: scale(1.02);
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.4);
 }
 
+/* Button Click Effect */
 button:active {
-    transform: scale(0.98);
+    transform: scale(0.95);
 }
 
-/* 🔹 Style for the Toggle Links */
+/* Toggle Link */
 .toggle-link {
     margin-top: 15px;
     font-size: 1rem;
@@ -175,7 +178,7 @@ button:active {
     text-decoration: underline;
 }
 
-/* 🔹 Style for Logout Button */
+/* Logout Button */
 #logout-button {
     display: none;
     margin-top: 20px;
@@ -192,47 +195,31 @@ button:active {
 
 #logout-button:hover {
     background: linear-gradient(135deg, #C0392B, #E74C3C);
-    transform: scale(1.02);
+    transform: scale(1.05);
 }
 
-/* 🔹 Style for Resource List */
-#recommendations ul {
-    list-style-type: none;
-}
-
+/* List Animation */
 #recommendations li {
-    background: #2D2D30;
+    background: rgba(45, 45, 48, 0.8);
     padding: 18px;
     margin: 12px 0;
     border-radius: 10px;
     box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.4);
     transition: background-color 0.3s ease, transform 0.3s ease;
+    animation: fadeInListItem 0.8s ease-out forwards;
+    opacity: 0;
 }
 
-#recommendations li:hover {
-    background-color: #61AFEF;
-    transform: scale(1.02);
+/* List Item Animation */
+@keyframes fadeInListItem {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
-#recommendations li:hover a {
-    color: #1E1E1E;
-}
-
-footer {
-    background: #1E1E1E;
-    color: #D4D4D4;
-    padding: 20px;
-    width: 100%;
-    text-align: center;
-    margin-top: 50px;
-    border-top: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-footer span {
-    color: #61AFEF;
-    font-weight: bold;
-}
-
-footer span:hover {
-    text-decoration: underline;
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    h1 { font-size: 2.5rem; }
+    h2 { font-size: 2rem; }
+    button, #logout-button { font-size: 1.1rem; }
+    form { align-items: center; }
 }

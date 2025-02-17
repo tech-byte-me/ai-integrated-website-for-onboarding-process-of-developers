@@ -105,16 +105,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Function to display resources dynamically
-    function displayResources(resources) {
-        resourceList.innerHTML = ""; // Clear previous resources
-        resources.forEach((resource) => {
-            const li = document.createElement("li");
-            li.textContent = resource;
-            resourceList.appendChild(li);
-        });
-    }
-
     // Handle logout
     logoutButton.addEventListener("click", function () {
         sessionStorage.removeItem("user_id");
@@ -128,4 +118,107 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!sessionStorage.getItem("user_id")) {
         logoutButton.style.display = "none";
     }
+
+    // Resources categorized by language and category
+    const resources = {
+        "Python": {
+            "Tutorial": { title: "Python Tutorial", url: "https://www.w3schools.com/python/" },
+            "Assessment Questions": { title: "Python Assessment Questions", url: "https://www.geeksforgeeks.org/python-programming-language/" }
+        },
+        "Java": {
+            "Tutorial": { title: "Java Tutorial", url: "https://www.w3schools.com/java/default.asp" },
+            "Assessment Questions": { title: "Java Assessment Questions", url: "https://www.geeksforgeeks.org/html-interview-questions/" }
+        },
+        "JavaScript": {
+            "Tutorial": { title: "JavaScript Tutorial", url: "https://www.w3schools.com/js/default.asp" },
+            "Assessment Questions": { title: "JavaScript Assessment Questions", url: "https://www.geeksforgeeks.org/javascript-interview-questions-and-answers/" },
+            "Questions": { title: "JavaScript Questions", url: "https://www.w3resource.com/javascript-exercises/javascript-basic-exercises.php" }
+        },
+        "CSS": {
+            "Tutorial": { title: "CSS Tutorial", url: "https://www.w3schools.com/css/default.asp" },
+            "Exercise": { title: "CSS Exercises", url: "https://www.w3schools.com/css/css_exercises.asp" }
+        },
+        "HTML": {
+            "Tutorial": { title: "HTML Tutorial", url: "https://www.w3schools.com/html/default.asp" },
+            "Assessment Questions": { title: "HTML Assessment Questions", url: "https://www.geeksforgeeks.org/html-interview-questions/" }
+        },
+        "C#": {
+            "Tutorial": { title: "C# Tutorial", url: "https://www.w3schools.com/cs/index.php" }
+        },
+        "React": {
+            "Tutorial": { title: "React Tutorial", url: "https://www.w3schools.com/react/default.asp" },
+            "Interview Questions": { title: "React Assessment Questions", url: "https://www.greatfrontend.com/questions/react-interview-questions?utm_source=google&utm_campaign=21407184174&utm_medium=ad&utm_content=703817022372&utm_term=react%20coding&gad_source=1&gclid=CjwKCAiA2cu9BhBhEiwAft6IxFFUI016KTDGMOdEwi170kGRXnrj88XGnPdZcb7px-1dSV2OwhnCjRoCkj4QAvD_BwE" }
+        },
+        "MySQL": {
+            "Tutorial": { title: "MySQL Tutorial", url: "https://www.w3schools.com/mysql/default.asp" },
+            "Exercises": { title: "MySQL Exercises", url: "https://www.w3schools.com/mysql/mysql_exercises.asp" }
+        },
+        "Django": {
+            "Tutorial": { title: "Django Tutorial", url: "https://www.w3schools.com/django/index.php" },
+            "Assessment Questions": { title: "Django Assessment Questions", url: "https://www.geeksforgeeks.org/django-interview-questions/" }
+        },
+        "Node.js": {
+            "Tutorial": { title: "Node.js Tutorial", url: "https://www.w3schools.com/nodejs/default.asp" },
+            "Assessment Questions": { title: "Node.js Assessment Questions", url: "https://www.geeksforgeeks.org/node-interview-questions-and-answers/" }
+        },
+        "DSA": {
+            "Tutorial": { title: "DSA Tutorial", url: "https://www.w3schools.com/dsa/index.php" }
+        },
+        "C++": {
+            "Tutorial": { title: "C++ Tutorial", url: "https://www.w3schools.com/cpp/default.asp" },
+            "Exercise": { title: "C++ Exercises", url: "https://www.w3schools.com/cpp/default.asp" } // Added the new link here
+        },
+        "Flask": {
+            "Tutorial": { title: "Flask Tutorial", url: "https://www.geeksforgeeks.org/flask-tutorial/" },
+            "Assessment Questions": { title: "Flask Assessment Questions", url: "https://www.knowledgehut.com/interview-questions/flask" }
+        }
+    };
+    
+
+    // Function to display resources dynamically as buttons
+    function displayResources(recommendedSkills = null) {
+        resourceList.innerHTML = ""; // Clear previous resources
+    
+        // If recommendedSkills is passed, only display resources related to those skills
+        const resourcesToDisplay = recommendedSkills ? 
+            Object.keys(resources).filter(language => recommendedSkills.includes(language)) : 
+            Object.keys(resources);
+    
+        resourcesToDisplay.forEach(language => {
+            const languageSection = document.createElement('div');
+            const languageTitle = document.createElement('h3');
+            languageTitle.textContent = language;
+            languageSection.appendChild(languageTitle);
+    
+            Object.keys(resources[language]).forEach(category => {
+                const categorySection = document.createElement('ul');
+                const categoryTitle = document.createElement('li');
+                categoryTitle.textContent = category;
+                categorySection.appendChild(categoryTitle);
+    
+                const resource = resources[language][category];
+                const li = document.createElement("li");
+    
+                const button = document.createElement("button");
+                button.textContent = resource.title;
+                button.classList.add("resource-button");
+    
+                button.addEventListener("click", () => {
+                    window.open(resource.url, "_blank");
+                });
+    
+                li.appendChild(button);
+                categorySection.appendChild(li);
+    
+                languageSection.appendChild(categorySection);
+            });
+    
+            resourceList.appendChild(languageSection);
+        });
+    }
+    
+    
+
+    // Display resources when logged in
+    displayResources();
 });

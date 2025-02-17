@@ -12,7 +12,7 @@ CORS(app)
 def init_db():
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
-    
+
     # Create users table with hashed passwords
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -59,6 +59,7 @@ def create_account():
         conn.commit()
         user_id = c.lastrowid
         conn.close()
+        session['user_id'] = user_id  # Set session for the user after creation
         return jsonify({'message': 'Account created successfully!', 'user_id': user_id})
     except sqlite3.IntegrityError:
         conn.close()
@@ -89,6 +90,45 @@ def logout():
     session.pop('user_id', None)  # Remove user session
     return jsonify({'message': 'Logged out successfully'})
 
+# Check onboarding status
+@app.route('/get_onboarding_status', methods=['GET'])
+def get_onboarding_status():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    user_id = session['user_id']
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM onboarding WHERE user_id = ?', (user_id,))
+    onboarding_data = c.fetchone()
+    conn.close()
+
+    if onboarding_data:
+        return jsonify({"onboarding_complete": True})
+    else:
+        return jsonify({"onboarding_complete": False})
+
+# Save onboarding information after registration
+@app.route('/save_onboarding', methods=['POST'])
+def save_onboarding():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 403
+
+    data = request.json
+    user_id = session['user_id']
+    experience = data['experience']
+    languages = data['languages']
+
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    
+    c.execute('''INSERT INTO onboarding (user_id, experience, languages)
+                 VALUES (?, ?, ?)''', (user_id, experience, languages))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"message": "Onboarding information saved successfully"})
+
 # Detect Technologies from GitHub Commits
 def detect_technologies_from_commit(commit_message, file_extensions):
     technologies = {
@@ -111,12 +151,16 @@ def detect_technologies_from_commit(commit_message, file_extensions):
 # Build Skill Graph for Recommendations
 def build_skill_graph():
     G = nx.DiGraph()
+    G.add_edge("Python", "Python")
     G.add_edge("Python", "Django")
     G.add_edge("Python", "Flask")
+    G.add_edge("JavaScript", "Javascript")
     G.add_edge("JavaScript", "React")
     G.add_edge("JavaScript", "Node.js")
     G.add_edge("AWS", "Terraform")
     G.add_edge("HTML", "CSS")
+    G.add_edge("HTML", "HTML")
+    
     return G
 
 def recommend_skills(commits):
@@ -192,7 +236,7 @@ def analyze_github():
         return jsonify({"error": "No repositories found or authentication issue."})
 
     all_commits = []
-    for repo in repos[:3]:  # Limit to first 3 repos for efficiency
+    for repo in repos:  
         commits = fetch_commit_history(github_username, repo['name'], github_token)
         all_commits.extend(commits)
 
