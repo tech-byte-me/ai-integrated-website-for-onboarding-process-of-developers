@@ -26,3 +26,6 @@ Ensure you have Python 3 installed (python --version or python3 --version).
 If you face any issues with bcrypt, you may need to install wheel and setuptools first:
 
 pip install wheel setuptools
+hi
+hsiil
+g
